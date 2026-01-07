@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفتكر إحنا إيه؟</title>
+    <style>
+        :root {
+            --primary: #111;
+            --accent: #ff4757;
+            --bg: #f9f9f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 95%;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #submission-form { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            box-sizing: border-box;
+            text-align: right;
+            font-size: 1rem;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #thank-you-msg {
+            display: none;
+            background: #dff9fb;
+            color: #0984e3;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .wall-header {
+            width: 95%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: red;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        /* The Scroll Box */
+        #ideas-container {
+            width: 95%;
+            max-width: 500px;
+            height: 400px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 15px;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            padding: 10px;
+        }
+
+        .idea-card {
+            padding: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            text-align: right;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .idea-card small { color: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>تفتكر إحنا إيه؟ 🔥</h1>
+    <p>توقعات الناس وصلت للسحاب، قولنا إنت كمان فاكرنا هنفتح إيه؟</p>
+
+    <form id="submission-form">
+        <textarea id="user-idea" rows="3" placeholder="أنا حاسس إنكم هتفتحوا..." required></textarea>
+        <button type="submit">إبعت توقعك</button>
+    </form>
+
+    <div id="thank-you-msg">
+        <h3>تسلم يا غالي! ❤️</h3>
+        <p>توقعك نزل دلوقتي مع الـ 10,000 اللي قبلك.</p>
+    </div>
+</div>
+
+<div class="wall-header">
+    <h3 style="margin:0;">توقعات الناس 👇</h3>
+    <div style="font-weight: bold;">
+        <span class="live-dot"></span> مباشر: <span id="count">10,042</span>
+    </div>
+</div>
+
+<div id="ideas-container">
+    </div>
+
+<script>
+    const container = document.getElementById('ideas-container');
+    const form = document.getElementById('submission-form');
+    const thankYou = document.getElementById('thank-you-msg');
+    const countSpan = document.getElementById('count');
+
+    const fakes = [
+        "مطعم برجر وبطاطس 🍔", "كافيه قعدة رايقة ☕", "محل موبايلات 📱", 
+        "جيم وعضلات 💪", "محل كريب وافل 🥞", "بلاي ستيشن 🎮", 
+        "حلاق مودرن ✂️", "محل هدايا 🎁", "مطعم كشري 🍲", "محل أحذية 👟"
+    ];
+    const rare = "محل ملابس براند جديد 👕";
+
+    // 1. Generate Data
+    let database = JSON.parse(localStorage.getItem('myFakeDB'));
+    if (!database) {
+        database = [];
+        for (let i = 0; i < 10000; i++) {
+            let guess = Math.random() > 0.05 ? fakes[Math.floor(Math.random() * fakes.length)] : rare;
+            database.push(guess);
+        }
+        localStorage.setItem('myFakeDB', JSON.stringify(database));
+    }
+
+    // 2. Render only visible items for speed
+    function renderWall() {
+        container.innerHTML = '';
+        database.slice(0, 100).forEach((text, index) => {
+            const div = document.createElement('div');
+            div.className = 'idea-card';
+            div.innerHTML = `<span>${text}</span> <small>#${10000 - index}</small>`;
+            container.appendChild(div);
+        });
+    }
+
+    // 3. Handle Form
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const val = document.getElementById('user-idea').value;
+        database.unshift(val); // Add user idea to top
+        localStorage.setItem('myFakeDB', JSON.stringify(database));
+        localStorage.setItem('done', 'true');
+        
+        renderWall();
+        form.style.display = 'none';
+        thankYou.style.display = 'block';
+    });
+
+    // 4. Initialization
+    window.onload = () => {
+        if(localStorage.getItem('done')) {
+            form.style.display = 'none';
+            thankYou.style.display = 'block';
+        }
+        renderWall();
+        
+        // Fake live counter effect
+        setInterval(() => {
+            let current = parseInt(countSpan.textContent.replace(',',''));
+            countSpan.textContent = (current + Math.floor(Math.random()*2)).toLocaleString();
+        }, 3000);
+    };
+</script>
+
+</body>
+</html>
